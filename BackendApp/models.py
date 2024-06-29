@@ -63,8 +63,8 @@ class MyUser(AbstractBaseUser):
     company_name = models.CharField(max_length=500, blank=True, null=True)
     status = models.CharField(max_length=10, choices=ROLE_CHOICES, default=CLIENT)
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=True)
-    is_superuser = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
     registered_date = models.DateTimeField(default=timezone.now)
 
     REQUIRED_FIELDS = ['name']
@@ -112,6 +112,7 @@ class Project(models.Model):
 
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
+    link = models.CharField(max_length=255)
     client = models.ForeignKey(MyUser, on_delete=models.CASCADE, default="wecreate.designs.srl@hotmail.com")
     status = models.CharField(max_length=50, choices=PROJECT_STATUS_CHOICES, default=PENDING)
     finish_due_date = models.DateTimeField()

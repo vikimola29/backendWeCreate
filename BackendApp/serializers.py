@@ -28,7 +28,7 @@ class NewsletterCreationSerializer(serializers.ModelSerializer):
 class MyUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
-        fields = '__all__'
+        fields = ['name', 'email',  'address', 'company_name', 'status']
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -38,32 +38,24 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    print("Serializer.py")
 
     @classmethod
     def get_token(cls, user):
-        print("AAA")
         token = super().get_token(user)
-        print("BBB")
         token['email'] = user.email
-        print("CCC")
         return token
 
     def validate(self, attrs):
-        print("*")
 
         credentials = {
             'email': attrs.get('email'),
             'password': attrs.get('password')
         }
-        print("credentials:", attrs.get('email'), attrs.get('password'))
-
         user = get_user_model().objects.filter(email=credentials['email']).first()
         print("User:", user)
-        print("**")
         if user and user.check_password(credentials['password']):
-            print("***")
             return super().validate(attrs)
         else:
-            print("****")
             raise serializers.ValidationError('Invalid credentials')
+
+

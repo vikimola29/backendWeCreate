@@ -1,7 +1,7 @@
 import logging
-
+from django.shortcuts import get_object_or_404
 from django.contrib import messages
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.hashers import make_password
 from django.utils.crypto import constant_time_compare, get_random_string
 import hashlib
@@ -16,17 +16,77 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.decorators import api_view
+from rest_framework.generics import ListAPIView
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import NewsletterUser, MyUser
-from .serializers import MessageSerializer, NewsletterUserSignUpSerializer, MyTokenObtainPairSerializer
+from .serializers import MessageSerializer, NewsletterUserSignUpSerializer, MyTokenObtainPairSerializer, \
+    MyUserSerializer
+
+
+
+
+class UserListAPIView(ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = MyUserSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return MyUser.objects.filter(user=user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ProfileView(APIView):
+    print("ProfileView")
+    permission_classes = [IsAuthenticated]
+    print("ProfileView2")
+
+    def get(self, request):
+        print("GET")
+        user = request.user
+        print("GET 2")
+        serializer = MyUserSerializer(user)
+        print("GET 3")
+        return Response(serializer.data)
+
+
+# @method_decorator(csrf_exempt, name='dispatch')
+# class ProfileView(APIView):
+#     permission_classes = [AllowAny]
+#
+#     def get(self, request):
+#         user = request.user
+#
+#         # Check if the user is authenticated
+#         if user.is_authenticated:
+#             serializer = MyUserSerializer(user)
+#             return Response(serializer.data)
+#         else:
+#             # Handle anonymous user scenario
+#             # Example: Retrieve a default or anonymous profile
+#             anonymous_user_data = {
+#                 'username': 'Anonymous',
+#                 'email': 'anonymous@example.com',
+#                 'description': 'Anonymous user profile'
+#                 # Add more fields as needed
+#             }
+#             serializer = MyUserSerializer(data=anonymous_user_data)
+#             serializer.is_valid()
+#             return Response(serializer.data)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
 class MyTokenObtainPairView(TokenObtainPairView):
-    print("Views.py")
     serializer_class = MyTokenObtainPairSerializer
 
 
@@ -34,41 +94,52 @@ class MyTokenObtainPairView(TokenObtainPairView):
 @api_view(['POST'])
 def user_register(request):
     if request.method == 'POST':
-        print("AAA")
         name = request.data.get('name')
         email = request.data.get('email')
         company_name = request.data.get('companyName')
         password = request.data.get('password')
         password2 = request.data.get('password2')
-        print("BBB")
 
         if MyUser.objects.filter(email=email).exists():
-            return JsonResponse({'success': False, 'message': 'Username already taken'})
-
-        print("CCC")
+            return JsonResponse({'success': False, 'message': 'Email already taken'})
 
         if password != password2:
             return JsonResponse({'success': False, 'message': 'Passwords do not match'})
-        print("EEE")
 
-        # password = make_password(password)
-        # print("FFF0")
-        user = MyUser(name=name, email=email, password=make_password(password), is_active=True, address=None,
-                      company_name=company_name, status="Client")
-        print("FFF")
+        user = MyUser(name=name, email=email, password=make_password(password), address=None, company_name=company_name,
+                      status="Client", is_active=True, is_staff=False, is_superuser=False)
 
-
-        print("GGG")
         user.save()
-        print("HHH")
         return JsonResponse({'success': True, 'message': 'Registration successful'})
 
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 
-def get_data(request):
-    data = MyUser.objects.all().values()
-    return JsonResponse({'data': list(data)})
+
+
+
+# @csrf_exempt
+# @api_view(['GET'])
+# def get_data(request):
+#     print("get data")
+#     user_email = request.user.email
+#     print(user_email)
+#     user_info = get_object_or_404(MyUser, email=user_email)
+#     print(user_info)
+    # try:
+    #     user = get_user_model().objects.get(email=user_email)
+    #     print('User:', user)
+    #     data = {
+    #         'email': user.email,
+    #         'name': user.name,
+    #         'address': user.address,
+    #         'company_name': user.company_name,
+    #         'status': user.status
+    #
+    #     }
+    #     return Response(data)
+    # except get_user_model().DoesNotExist:
+    #     return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 def user_recover(request):

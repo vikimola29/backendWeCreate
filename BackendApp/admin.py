@@ -17,7 +17,7 @@ class NewsletterAdmin(admin.ModelAdmin):
 
 class MyUserAdmin(admin.ModelAdmin):
     list_display = (
-        'email', 'name', 'address', 'company_name', 'status', 'is_staff', 'is_superuser', 'is_active',
+        'email', 'name', 'address', 'company_name', 'status', 'is_staff', 'is_superuser',
         'registered_date')
 
 
