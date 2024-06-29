@@ -28,6 +28,15 @@ from .models import NewsletterUser, MyUser, Project
 from .serializers import MessageSerializer, NewsletterUserSignUpSerializer, MyTokenObtainPairSerializer, \
     MyUserSerializer, ProjectSerializer
 
+@method_decorator(csrf_exempt, name='dispatch')
+class AllProjectView(APIView):
+    serializer_class = ProjectSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        projects = Project.objects.all()
+        serializer = ProjectSerializer(projects, many=True)
+        return Response(serializer.data)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ProjectView(APIView):
