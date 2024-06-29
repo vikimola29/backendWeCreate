@@ -24,65 +24,30 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import NewsletterUser, MyUser
+from .models import NewsletterUser, MyUser, Project
 from .serializers import MessageSerializer, NewsletterUserSignUpSerializer, MyTokenObtainPairSerializer, \
-    MyUserSerializer
+    MyUserSerializer, ProjectSerializer
 
 
+@method_decorator(csrf_exempt, name='dispatch')
+class ProjectView(APIView):
+    serializer_class = ProjectSerializer
+    permission_classes = [IsAuthenticated]
 
-
-class UserListAPIView(ListAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = MyUserSerializer
-
-    def get_queryset(self):
-        user = self.request.user
-        return MyUser.objects.filter(user=user)
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.serializer_class(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get(self, request, *args, **kwargs):
+        projects = Project.objects.filter(client=request.user)
+        serializer = ProjectSerializer(projects, many=True)
+        return Response(serializer.data)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ProfileView(APIView):
-    print("ProfileView")
     permission_classes = [IsAuthenticated]
-    print("ProfileView2")
 
     def get(self, request):
-        print("GET")
         user = request.user
-        print("GET 2")
         serializer = MyUserSerializer(user)
-        print("GET 3")
         return Response(serializer.data)
-
-
-# @method_decorator(csrf_exempt, name='dispatch')
-# class ProfileView(APIView):
-#     permission_classes = [AllowAny]
-#
-#     def get(self, request):
-#         user = request.user
-#
-#         # Check if the user is authenticated
-#         if user.is_authenticated:
-#             serializer = MyUserSerializer(user)
-#             return Response(serializer.data)
-#         else:
-#             # Handle anonymous user scenario
-#             # Example: Retrieve a default or anonymous profile
-#             anonymous_user_data = {
-#                 'username': 'Anonymous',
-#                 'email': 'anonymous@example.com',
-#                 'description': 'Anonymous user profile'
-#                 # Add more fields as needed
-#             }
-#             serializer = MyUserSerializer(data=anonymous_user_data)
-#             serializer.is_valid()
-#             return Response(serializer.data)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -115,9 +80,6 @@ def user_register(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 
-
-
-
 # @csrf_exempt
 # @api_view(['GET'])
 # def get_data(request):
@@ -126,20 +88,20 @@ def user_register(request):
 #     print(user_email)
 #     user_info = get_object_or_404(MyUser, email=user_email)
 #     print(user_info)
-    # try:
-    #     user = get_user_model().objects.get(email=user_email)
-    #     print('User:', user)
-    #     data = {
-    #         'email': user.email,
-    #         'name': user.name,
-    #         'address': user.address,
-    #         'company_name': user.company_name,
-    #         'status': user.status
-    #
-    #     }
-    #     return Response(data)
-    # except get_user_model().DoesNotExist:
-    #     return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+# try:
+#     user = get_user_model().objects.get(email=user_email)
+#     print('User:', user)
+#     data = {
+#         'email': user.email,
+#         'name': user.name,
+#         'address': user.address,
+#         'company_name': user.company_name,
+#         'status': user.status
+#
+#     }
+#     return Response(data)
+# except get_user_model().DoesNotExist:
+#     return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 def user_recover(request):

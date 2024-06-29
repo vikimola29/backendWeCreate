@@ -111,19 +111,19 @@ class Project(models.Model):
     ]
 
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255)
-    link = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, blank=True, null=True)
+    link = models.CharField(max_length=255, blank=True, null=True)
     client = models.ForeignKey(MyUser, on_delete=models.CASCADE, default="wecreate.designs.srl@hotmail.com")
     status = models.CharField(max_length=50, choices=PROJECT_STATUS_CHOICES, default=PENDING)
-    finish_due_date = models.DateTimeField()
+    finish_due_date = models.DateField()
     batch_price = models.IntegerField()
     monthly_price = models.IntegerField()
-    batch_payment_due_date = models.DateTimeField()
-    monthly_payment_due_date = models.DateTimeField()
+    batch_payment_due_date = models.DateField()
+    monthly_payment_due_date = models.DateField()
     batch_payment_status = models.CharField(max_length=50, choices=PAYMENT_STATUS_CHOICES, default=NOT_PAID)
     monthly_payment_status = models.CharField(max_length=50, choices=PAYMENT_STATUS_CHOICES, default=NOT_PAID)
-    registeredDate = models.DateTimeField(default=timezone.now)
-    lastModifiedDate = models.DateTimeField(auto_now=True)
+    registeredDate = models.DateField(default=timezone.now)
+
 
     def __str__(self):
         return f"{self.name} - {self.client.email}"

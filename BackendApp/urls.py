@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from . import views
-from .views import MyTokenObtainPairView, UserListAPIView, ProfileView
+from .views import MyTokenObtainPairView, ProfileView, ProjectView
 
 urlpatterns = [
     re_path(r'^api/create_message/$', views.create_message, name='create_message'),
@@ -14,8 +14,7 @@ urlpatterns = [
     re_path(r'^api/recover-password/$', views.user_recover_password, name='recover-password'),
     re_path(r'^api/token/$', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     re_path(r'^api/token/refresh/$', TokenRefreshView.as_view(), name='token_refresh'),
-    re_path(r"^api/userlist/$", UserListAPIView.as_view(), name='studentlist'),
     re_path('^api/profile/$', ProfileView.as_view(), name='profile'),
-    # re_path(r'^api/profile/$', views.get_data, name='get_profile_data'),
+    re_path('^api/projects/$', ProjectView.as_view(), name='projects'),
 
 ]
