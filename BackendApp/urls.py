@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from . import views
-from .views import MyTokenObtainPairView, ProfileView, ProjectView, AllProjectView
+from .views import MyTokenObtainPairView, ProfileView, ProjectView, AllProjectsView, AllClientsView
 
 urlpatterns = [
     re_path(r'^api/create_message/$', views.create_message, name='create_message'),
@@ -15,7 +15,8 @@ urlpatterns = [
     re_path(r'^api/token/$', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     re_path(r'^api/token/refresh/$', TokenRefreshView.as_view(), name='token_refresh'),
     re_path('^api/profile/$', ProfileView.as_view(), name='profile'),
+    re_path('^api/all-clients/$', AllClientsView.as_view(), name='all-clients'),
     re_path('^api/projects/$', ProjectView.as_view(), name='projects'),
-    re_path('^api/all-projects/$', AllProjectView.as_view(), name='all-projects'),
+    re_path('^api/all-projects/$', AllProjectsView.as_view(), name='all-projects'),
 
 ]

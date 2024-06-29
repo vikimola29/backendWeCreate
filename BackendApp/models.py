@@ -60,6 +60,7 @@ class MyUser(AbstractBaseUser):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=255, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
+    phone_number = models.CharField(max_length=255, blank=True, null=True)
     company_name = models.CharField(max_length=500, blank=True, null=True)
     status = models.CharField(max_length=10, choices=ROLE_CHOICES, default=CLIENT)
     is_active = models.BooleanField(default=True)

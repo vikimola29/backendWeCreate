@@ -28,8 +28,9 @@ from .models import NewsletterUser, MyUser, Project
 from .serializers import MessageSerializer, NewsletterUserSignUpSerializer, MyTokenObtainPairSerializer, \
     MyUserSerializer, ProjectSerializer
 
+
 @method_decorator(csrf_exempt, name='dispatch')
-class AllProjectView(APIView):
+class AllProjectsView(APIView):
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
 
@@ -37,6 +38,7 @@ class AllProjectView(APIView):
         projects = Project.objects.all()
         serializer = ProjectSerializer(projects, many=True)
         return Response(serializer.data)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ProjectView(APIView):
@@ -46,6 +48,17 @@ class ProjectView(APIView):
     def get(self, request, *args, **kwargs):
         projects = Project.objects.filter(client=request.user)
         serializer = ProjectSerializer(projects, many=True)
+        return Response(serializer.data)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AllClientsView(APIView):
+    serializer_class = MyUserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        clients = MyUser.objects.all()
+        serializer = MyUserSerializer(clients, many=True)
         return Response(serializer.data)
 
 

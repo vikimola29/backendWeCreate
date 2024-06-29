@@ -28,7 +28,7 @@ class NewsletterCreationSerializer(serializers.ModelSerializer):
 class MyUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
-        fields = ['name', 'email',  'address', 'company_name', 'status']
+        fields = ['name', 'email', 'company_name', 'phone_number', 'address', 'status']
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -52,10 +52,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             'password': attrs.get('password')
         }
         user = get_user_model().objects.filter(email=credentials['email']).first()
-        print("User:", user)
         if user and user.check_password(credentials['password']):
             return super().validate(attrs)
         else:
             raise serializers.ValidationError('Invalid credentials')
-
-
