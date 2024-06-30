@@ -1,9 +1,9 @@
-from django.urls import re_path
+from django.urls import re_path, path
 from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from . import views
-from .views import MyTokenObtainPairView, ProfileView, ProjectView, AllProjectsView, AllClientsView
+from .views import MyTokenObtainPairView, ProfileView, ProjectView, AllProjectsView, AllClientsView, ProjectDetailView
 
 urlpatterns = [
     re_path(r'^api/create_message/$', views.create_message, name='create_message'),
@@ -17,6 +17,7 @@ urlpatterns = [
     re_path('^api/profile/$', ProfileView.as_view(), name='profile'),
     re_path('^api/all-clients/$', AllClientsView.as_view(), name='all-clients'),
     re_path('^api/projects/$', ProjectView.as_view(), name='projects'),
+    path('api/projects/<int:id>/', ProjectDetailView.as_view(), name='project-detail'),
     re_path('^api/all-projects/$', AllProjectsView.as_view(), name='all-projects'),
 
 ]

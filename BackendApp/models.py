@@ -123,7 +123,7 @@ class Project(models.Model):
     monthly_payment_due_date = models.DateField()
     batch_payment_status = models.CharField(max_length=50, choices=PAYMENT_STATUS_CHOICES, default=NOT_PAID)
     monthly_payment_status = models.CharField(max_length=50, choices=PAYMENT_STATUS_CHOICES, default=NOT_PAID)
-    registeredDate = models.DateField(default=timezone.now)
+    registered_date = models.DateField(default=timezone.now)
 
 
     def __str__(self):

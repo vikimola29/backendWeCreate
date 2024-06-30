@@ -30,6 +30,37 @@ from .serializers import MessageSerializer, NewsletterUserSignUpSerializer, MyTo
 
 
 @method_decorator(csrf_exempt, name='dispatch')
+class ProjectDetailView(APIView):
+    print('Project Detail')
+    serializer_class = ProjectSerializer
+    permission_classes = [IsAuthenticated]
+    print('Project Detail - after Permissions')
+
+    def get_queryset(self):
+        return Project.objects.filter(client=self.request.user)
+
+    def get(self, request, id):
+        project = Project.objects.filter(pk=id)
+        print(project)
+        serializer = ProjectSerializer(project, many=True)
+        return Response(serializer.data)
+
+    def put(self, request, id):
+        project = Project.objects.get(pk=id)
+        print(project)
+        serializer = ProjectSerializer(project, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        project = get_object_or_404(Project, pk=pk, client=request.user)
+        project.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
 class AllProjectsView(APIView):
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
@@ -70,6 +101,14 @@ class ProfileView(APIView):
         user = request.user
         serializer = MyUserSerializer(user)
         return Response(serializer.data)
+
+    def put(self, request):
+        user = request.user
+        serializer = MyUserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
