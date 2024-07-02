@@ -33,7 +33,7 @@ from .serializers import MessageSerializer, NewsletterUserSignUpSerializer, MyTo
 class ProjectDetailView(APIView):
     print('Project Detail')
     serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     print('Project Detail - after Permissions')
 
     def get_queryset(self):
@@ -46,17 +46,46 @@ class ProjectDetailView(APIView):
         return Response(serializer.data)
 
     def put(self, request, id):
-        project = Project.objects.get(pk=id)
+        print("ProjectDETAILView PUT")
+        project = get_object_or_404(Project, id=id)
         print(project)
-        serializer = ProjectSerializer(project, data=request.data, partial=True)
+        print('***')
+
+        client_email = request.data.get('client')
+        print("Client mail", client_email)
+        client = get_object_or_404(MyUser, email=client_email)
+        print("Client", client)
+
+        project_data = {
+            'name': request.data.get('name'),
+            'link': request.data.get('link'),
+            'client': client.id,
+            'status': request.data.get('status'),
+            'finish_due_date': request.data.get('finish_due_date'),
+            'batch_price': request.data.get('batch_price'),
+            'monthly_price': request.data.get('monthly_price'),
+            'batch_payment_due_date': request.data.get('batch_payment_due_date'),
+            'monthly_payment_due_date': request.data.get('monthly_payment_due_date'),
+            'batch_payment_status': request.data.get('batch_payment_status'),
+            'monthly_payment_status': request.data.get('monthly_payment_status'),
+            'registered_date': request.data.get('registered_date')
+        }
+        print(project_data)
+        serializer = ProjectSerializer(project, data=project_data, partial=True)
+        print('serialized')
         if serializer.is_valid():
+            print('validated')
             serializer.save()
             return Response(serializer.data)
+        print("Serializer errors:", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, pk):
-        project = get_object_or_404(Project, pk=pk, client=request.user)
+    def delete(self, request, id):
+        print("ProjectDETAILView DELETE")
+        project = get_object_or_404(Project, pk=id)
+        print(project)
         project.delete()
+        print('deleted')
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -73,13 +102,50 @@ class AllProjectsView(APIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ProjectView(APIView):
+    print('ProjectView')
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
+    print('ProjectView -  after perm')
 
     def get(self, request, *args, **kwargs):
+        print('ProjectView GET')
         projects = Project.objects.filter(client=request.user)
         serializer = ProjectSerializer(projects, many=True)
         return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        print("POST")
+
+        client_email = request.data.get('client')
+
+        client = get_object_or_404(MyUser, email=client_email)
+        print("Client", client)
+
+        project_data = {
+            'name': request.data.get('name'),
+            'link': request.data.get('link'),
+            'client': client.id,
+            'status': request.data.get('status'),
+            'finish_due_date': request.data.get('finish_due_date'),
+            'batch_price': request.data.get('batch_price'),
+            'monthly_price': request.data.get('monthly_price'),
+            'batch_payment_due_date': request.data.get('batch_payment_due_date'),
+            'monthly_payment_due_date': request.data.get('monthly_payment_due_date'),
+            'batch_payment_status': request.data.get('batch_payment_status'),
+            'monthly_payment_status': request.data.get('monthly_payment_status'),
+            'registered_date': request.data.get('registered_date')
+        }
+        print(project_data)
+
+        serializer = ProjectSerializer(data=project_data)
+        print('serialized')
+
+        if serializer.is_valid():
+            print("is valid")
+            serializer.save()
+            return Response(serializer.data)
+        print("Serializer errors:", serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @method_decorator(csrf_exempt, name='dispatch')

@@ -66,7 +66,7 @@ class MyUser(AbstractBaseUser):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-    registered_date = models.DateTimeField(default=timezone.now)
+    registered_date = models.DateTimeField(default=timezone.now, blank=True, null=True )
 
     REQUIRED_FIELDS = ['name']
     USERNAME_FIELD = 'email'
@@ -115,15 +115,15 @@ class Project(models.Model):
     name = models.CharField(max_length=255, blank=True, null=True)
     link = models.CharField(max_length=255, blank=True, null=True)
     client = models.ForeignKey(MyUser, on_delete=models.CASCADE, default="wecreate.designs.srl@hotmail.com")
-    status = models.CharField(max_length=50, choices=PROJECT_STATUS_CHOICES, default=PENDING)
-    finish_due_date = models.DateField()
-    batch_price = models.IntegerField()
-    monthly_price = models.IntegerField()
-    batch_payment_due_date = models.DateField()
-    monthly_payment_due_date = models.DateField()
-    batch_payment_status = models.CharField(max_length=50, choices=PAYMENT_STATUS_CHOICES, default=NOT_PAID)
-    monthly_payment_status = models.CharField(max_length=50, choices=PAYMENT_STATUS_CHOICES, default=NOT_PAID)
-    registered_date = models.DateField(default=timezone.now)
+    status = models.CharField(max_length=50, choices=PROJECT_STATUS_CHOICES, default=PENDING, blank=True, null=True)
+    finish_due_date = models.DateField( blank=True, null=True)
+    batch_price = models.IntegerField( blank=True, null=True)
+    monthly_price = models.IntegerField(blank=True, null=True)
+    batch_payment_due_date = models.DateField(blank=True, null=True)
+    monthly_payment_due_date = models.DateField(blank=True, null=True)
+    batch_payment_status = models.CharField(max_length=50, choices=PAYMENT_STATUS_CHOICES, default=NOT_PAID, blank=True, null=True)
+    monthly_payment_status = models.CharField(max_length=50, choices=PAYMENT_STATUS_CHOICES, default=NOT_PAID, blank=True, null=True)
+    registered_date = models.DateField(default=timezone.now, blank=True, null=True)
 
 
     def __str__(self):
