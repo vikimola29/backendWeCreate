@@ -90,6 +90,8 @@ class ClientView(APIView):
         if client_data['password'] != client_data['password2']:
             return JsonResponse({'success': False, 'message': 'Passwords do not match'})
 
+        client_data['password'] = make_password(client_data['password'])
+
         serializer = MyUserSerializer(data=client_data)
 
         if serializer.is_valid():
