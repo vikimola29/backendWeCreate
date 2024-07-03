@@ -36,38 +36,40 @@ class ClientDetailView(APIView):
     permission_classes = [AllowAny]
     print('Client Detail - after Permissions')
 
-    def get_queryset(self):
-        return Project.objects.filter(client=self.request.user)
-
     def get(self, request, id):
-        project = Project.objects.filter(pk=id)
-        print(project)
-        serializer = ProjectSerializer(project, many=True)
+        client = Project.objects.filter(pk=id)
+        print(client)
+        serializer = MyUserSerializer(client, many=True)
         return Response(serializer.data)
 
     def put(self, request, id):
-        project = get_object_or_404(Project, id=id)
+        print("*")
 
-        client_email = request.data.get('client')
-        client = get_object_or_404(MyUser, email=client_email)
+        client = get_object_or_404(MyUser, pk=id)
+        print("**")
 
-        project_data = {
+
+        client_data = {
+            'email': request.data.get('email'),
             'name': request.data.get('name'),
-            'link': request.data.get('link'),
-            'client': client.id,
+            'address': request.data.get('address'),
+            'phone_number': request.data.get('phone_number'),
+            'company_name': request.data.get('company_name'),
             'status': request.data.get('status'),
-            'finish_due_date': request.data.get('finish_due_date'),
-            'batch_price': request.data.get('batch_price'),
-            'monthly_price': request.data.get('monthly_price'),
-            'batch_payment_due_date': request.data.get('batch_payment_due_date'),
-            'monthly_payment_due_date': request.data.get('monthly_payment_due_date'),
-            'batch_payment_status': request.data.get('batch_payment_status'),
-            'monthly_payment_status': request.data.get('monthly_payment_status'),
-            'registered_date': request.data.get('registered_date')
+            'is_staff': request.data.get('is_staff'),
+            'is_superuser': request.data.get('is_superuser')
         }
-        serializer = ProjectSerializer(project, data=project_data, partial=True)
+        print("***")
+
+        serializer = MyUserSerializer(client, data=client_data, partial=True)
+        print("+")
+
         if serializer.is_valid():
+            print("++")
+
             serializer.save()
+            print("+++")
+
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -80,11 +82,13 @@ class ClientDetailView(APIView):
 @method_decorator(csrf_exempt, name='dispatch')
 class ClientView(APIView):
     permission_classes = [AllowAny]
+
+    def get(self, request):
+        user = request.user
+        serializer = MyUserSerializer(user)
+        return Response(serializer.data)
+
     def post(self, request, *args, **kwargs):
-
-
-        print('POST')
-
         client_data = {
             'name': request.data.get('name'),
             'email': request.data.get('email'),
@@ -92,24 +96,17 @@ class ClientView(APIView):
             'password': request.data.get('password'),
             'password2': request.data.get('password2')
         }
-        print(client_data)
 
         if MyUser.objects.filter(email=client_data['email']).exists():
             return JsonResponse({'success': False, 'message': 'Email already taken'})
-        print('*')
+
         if client_data['password'] != client_data['password2']:
             return JsonResponse({'success': False, 'message': 'Passwords do not match'})
-        print('**')
 
         serializer = MyUserSerializer(data=client_data)
-        print('***')
 
         if serializer.is_valid():
-            print('****')
-
             serializer.save()
-            print('*****')
-
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -240,7 +237,6 @@ class ProfileView(APIView):
 @method_decorator(csrf_exempt, name='dispatch')
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
-
 
 
 def user_recover(request):

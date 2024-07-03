@@ -56,7 +56,7 @@ class MyUser(AbstractBaseUser):
         (ADMIN, 'Admin'),
         (CLIENT, 'Client'),
     )
-
+    id = models.AutoField(primary_key=True)
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=255, blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
