@@ -37,18 +37,12 @@ class ClientDetailView(APIView):
     print('Client Detail - after Permissions')
 
     def get(self, request, id):
-        client = Project.objects.filter(pk=id)
-        print(client)
+        client = MyUser.objects.filter(pk=id)
         serializer = MyUserSerializer(client, many=True)
         return Response(serializer.data)
 
     def put(self, request, id):
-        print("*")
-
         client = get_object_or_404(MyUser, pk=id)
-        print("**")
-
-
         client_data = {
             'email': request.data.get('email'),
             'name': request.data.get('name'),
@@ -59,17 +53,10 @@ class ClientDetailView(APIView):
             'is_staff': request.data.get('is_staff'),
             'is_superuser': request.data.get('is_superuser')
         }
-        print("***")
-
         serializer = MyUserSerializer(client, data=client_data, partial=True)
-        print("+")
 
         if serializer.is_valid():
-            print("++")
-
             serializer.save()
-            print("+++")
-
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

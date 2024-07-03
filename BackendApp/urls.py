@@ -22,11 +22,11 @@ urlpatterns = [
 
     re_path('^api/profile/$', ProfileView.as_view(), name='profile'),
     re_path('^api/projects/$', ProjectView.as_view(), name='projects'),
-    path('api/projects/<int:id>/', ProjectDetailView.as_view(), name='project-detail'),
+    path('api/project/<int:id>/', ProjectDetailView.as_view(), name='project-detail'),
     re_path('^api/all-projects/$', AllProjectsView.as_view(), name='all-projects'),
 
     re_path('^api/all-clients/$', AllClientsView.as_view(), name='all-clients'),
     re_path('^api/clients/$', ClientView.as_view(), name='clients'),
-    path('api/clients/<int:id>/', ClientDetailView.as_view(), name='client-detail'),
+    path('api/client/<int:id>/', ClientDetailView.as_view(), name='client-detail'),
 
 ]

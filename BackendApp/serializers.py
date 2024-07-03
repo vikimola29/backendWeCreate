@@ -28,7 +28,7 @@ class NewsletterCreationSerializer(serializers.ModelSerializer):
 class MyUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
-        fields = ['id', 'name', 'email','password', 'company_name', 'phone_number', 'address', 'status']
+        fields = '__all__'
 
 
 class ProjectSerializer(serializers.ModelSerializer):
