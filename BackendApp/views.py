@@ -61,8 +61,8 @@ class ClientDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, id):
-        project = get_object_or_404(Project, pk=id)
-        project.delete()
+        client = get_object_or_404(MyUser, pk=id)
+        client.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
