@@ -30,11 +30,11 @@ from .serializers import MessageSerializer, NewsletterUserSignUpSerializer, MyTo
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class ProjectDetailView(APIView):
-    print('Project Detail')
+class ClientDetailView(APIView):
+    print('Client Detail')
     serializer_class = ProjectSerializer
     permission_classes = [AllowAny]
-    print('Project Detail - after Permissions')
+    print('Client Detail - after Permissions')
 
     def get_queryset(self):
         return Project.objects.filter(client=self.request.user)
@@ -42,6 +42,99 @@ class ProjectDetailView(APIView):
     def get(self, request, id):
         project = Project.objects.filter(pk=id)
         print(project)
+        serializer = ProjectSerializer(project, many=True)
+        return Response(serializer.data)
+
+    def put(self, request, id):
+        project = get_object_or_404(Project, id=id)
+
+        client_email = request.data.get('client')
+        client = get_object_or_404(MyUser, email=client_email)
+
+        project_data = {
+            'name': request.data.get('name'),
+            'link': request.data.get('link'),
+            'client': client.id,
+            'status': request.data.get('status'),
+            'finish_due_date': request.data.get('finish_due_date'),
+            'batch_price': request.data.get('batch_price'),
+            'monthly_price': request.data.get('monthly_price'),
+            'batch_payment_due_date': request.data.get('batch_payment_due_date'),
+            'monthly_payment_due_date': request.data.get('monthly_payment_due_date'),
+            'batch_payment_status': request.data.get('batch_payment_status'),
+            'monthly_payment_status': request.data.get('monthly_payment_status'),
+            'registered_date': request.data.get('registered_date')
+        }
+        serializer = ProjectSerializer(project, data=project_data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, id):
+        project = get_object_or_404(Project, pk=id)
+        project.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ClientView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request, *args, **kwargs):
+
+
+        print('POST')
+
+        client_data = {
+            'name': request.data.get('name'),
+            'email': request.data.get('email'),
+            'company_name': request.data.get('company_name'),
+            'password': request.data.get('password'),
+            'password2': request.data.get('password2')
+        }
+        print(client_data)
+
+        if MyUser.objects.filter(email=client_data['email']).exists():
+            return JsonResponse({'success': False, 'message': 'Email already taken'})
+        print('*')
+        if client_data['password'] != client_data['password2']:
+            return JsonResponse({'success': False, 'message': 'Passwords do not match'})
+        print('**')
+
+        serializer = MyUserSerializer(data=client_data)
+        print('***')
+
+        if serializer.is_valid():
+            print('****')
+
+            serializer.save()
+            print('*****')
+
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AllClientsView(APIView):
+    serializer_class = MyUserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        clients = MyUser.objects.all()
+        serializer = MyUserSerializer(clients, many=True)
+        return Response(serializer.data)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ProjectDetailView(APIView):
+    serializer_class = ProjectSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return Project.objects.filter(client=self.request.user)
+
+    def get(self, request, id):
+        project = Project.objects.filter(pk=id)
         serializer = ProjectSerializer(project, many=True)
         return Response(serializer.data)
 
@@ -99,7 +192,6 @@ class ProjectView(APIView):
         return Response(serializer.data)
 
     def post(self, request, *args, **kwargs):
-
         client_email = request.data.get('client')
 
         client = get_object_or_404(MyUser, email=client_email)
@@ -128,17 +220,6 @@ class ProjectView(APIView):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class AllClientsView(APIView):
-    serializer_class = MyUserSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        clients = MyUser.objects.all()
-        serializer = MyUserSerializer(clients, many=True)
-        return Response(serializer.data)
-
-
-@method_decorator(csrf_exempt, name='dispatch')
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -160,54 +241,6 @@ class ProfileView(APIView):
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
-
-@csrf_exempt
-@api_view(['POST'])
-def user_register(request):
-    if request.method == 'POST':
-        name = request.data.get('name')
-        email = request.data.get('email')
-        company_name = request.data.get('companyName')
-        password = request.data.get('password')
-        password2 = request.data.get('password2')
-
-        if MyUser.objects.filter(email=email).exists():
-            return JsonResponse({'success': False, 'message': 'Email already taken'})
-
-        if password != password2:
-            return JsonResponse({'success': False, 'message': 'Passwords do not match'})
-
-        user = MyUser(name=name, email=email, password=make_password(password), address=None, company_name=company_name,
-                      status="Client", is_active=True, is_staff=False, is_superuser=False)
-
-        user.save()
-        return JsonResponse({'success': True, 'message': 'Registration successful'})
-
-    return JsonResponse({'success': False, 'message': 'Invalid request method'})
-
-
-# @csrf_exempt
-# @api_view(['GET'])
-# def get_data(request):
-#     print("get data")
-#     user_email = request.user.email
-#     print(user_email)
-#     user_info = get_object_or_404(MyUser, email=user_email)
-#     print(user_info)
-# try:
-#     user = get_user_model().objects.get(email=user_email)
-#     print('User:', user)
-#     data = {
-#         'email': user.email,
-#         'name': user.name,
-#         'address': user.address,
-#         'company_name': user.company_name,
-#         'status': user.status
-#
-#     }
-#     return Response(data)
-# except get_user_model().DoesNotExist:
-#     return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 def user_recover(request):
