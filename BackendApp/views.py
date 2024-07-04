@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.hashers import make_password
+from django.template import TemplateDoesNotExist
 from django.utils.crypto import constant_time_compare, get_random_string
 import hashlib
 from django.contrib.auth.hashers import BasePasswordHasher
@@ -15,7 +16,7 @@ from django.template.loader import get_template
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -238,16 +239,18 @@ def user_recover_password(request):
 
 @csrf_exempt
 @api_view(['POST', 'GET'])
+@permission_classes([AllowAny])
 def create_message(request):
     if request.method == 'POST':
         serializer = MessageSerializer(data=request.data)
+
         if serializer.is_valid():
             serializer.save()
 
-            name = request.POST.get('name')
-            phone = request.POST.get('phone')
-            email = request.POST.get('email')
-            message = request.POST.get('message')
+            name = request.data.get('name')
+            phone = request.data.get('phone')
+            email = request.data.get('email')
+            message = request.data.get('message')
 
             subject = "WeCreate - Contact Form"
             content = f"Name: {name} \n" \
@@ -263,17 +266,13 @@ def create_message(request):
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    else:
-        return HttpResponse("Yo")
-
 
 logger = logging.getLogger(__name__)
 
 
 @csrf_exempt
 @api_view(['POST', 'GET'])
+@permission_classes([AllowAny])
 def newsletter_subscribe(request):
     if request.method == 'POST':
         try:
@@ -283,13 +282,20 @@ def newsletter_subscribe(request):
                 if not NewsletterUser.objects.filter(email=email).exists():
                     serializer.save()
                     subject = "Bine ai venit la WeCreate!"
-                    # from_email = settings.EMAIL_HOST_USER
                     from_email = 'wecreate.designs.srl@hotmail.com'
                     recipient_list = [email]
-                    subscribe_message = get_template('subscribe_email.txt').render()
-                    html_template = get_template('subscribe_email.html').render()
-                    message = EmailMultiAlternatives(subject=subject, body=subscribe_message, from_email=from_email,
-                                                     to=recipient_list)
+                    try:
+                        subscribe_message = get_template('subscribe_email.txt').render()
+                        html_template = get_template('subscribe_email.html').render()
+                    except TemplateDoesNotExist as e:
+                        logger.error(f"Template not found: {e}")
+                        return Response({"error": "Template not found"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    message = EmailMultiAlternatives(
+                        subject=subject,
+                        body=subscribe_message,
+                        from_email=from_email,
+                        to=recipient_list
+                    )
                     message.attach_alternative(html_template, "text/html")
                     # message.send()
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -302,13 +308,15 @@ def newsletter_subscribe(request):
             return Response({"error": "Validation error"}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"An unexpected error occurred: {e}")
-            return HttpResponseServerError("An unexpected error occurred. Please try again later.")
+            return Response({"error": "An unexpected error occurred. Please try again later."},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
-        return HttpResponse("Yo")
+        return Response(status=status.HTTP_200_OK)
 
 
 @csrf_exempt
 @api_view(['POST', 'GET'])
+@permission_classes([AllowAny])
 def newsletter_unsubscribe(request):
     if request.method == 'POST':
         serializer = NewsletterUserSignUpSerializer(data=request.data)
@@ -325,5 +333,3 @@ def newsletter_unsubscribe(request):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-    else:
-        return HttpResponse("Yo")
