@@ -38,8 +38,6 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    print('serializer')
-
 
     @classmethod
     def get_token(cls, user):

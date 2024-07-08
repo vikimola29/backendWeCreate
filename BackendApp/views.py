@@ -1,80 +1,71 @@
 import logging
 
-from django.dispatch import receiver
-from django.shortcuts import get_object_or_404
+from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.hashers import make_password
-from django.template import TemplateDoesNotExist
-from django.urls import reverse
-from django.utils.crypto import constant_time_compare, get_random_string
-import hashlib
-from django.contrib.auth.hashers import BasePasswordHasher
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.views import PasswordContextMixin
 from django.core.exceptions import ValidationError
-from django.core.mail import EmailMultiAlternatives, send_mail
-from django.http import HttpResponse
-from django.http import HttpResponseServerError
+from django.core.mail import EmailMultiAlternatives
 from django.http import JsonResponse
-from django.template.loader import get_template, render_to_string
+from django.middleware.csrf import get_token
+from django.shortcuts import get_object_or_404
+from django.template import TemplateDoesNotExist
+from django.template.loader import get_template
+from django.urls import reverse_lazy, reverse
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+from django.utils.translation import gettext_lazy as _
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.views.generic import FormView
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import NewsletterUser, MyUser, Project
 from .serializers import MessageSerializer, NewsletterUserSignUpSerializer, MyTokenObtainPairSerializer, \
     MyUserSerializer, ProjectSerializer
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.http import JsonResponse
 from django_rest_passwordreset.signals import reset_password_token_created
+from django.dispatch import receiver
 
 
 @receiver(reset_password_token_created)
-def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
-    """
-    Handles password reset tokens
-    When a token is created, an e-mail needs to be sent to the user
-    :param sender: View Class that sent the signal
-    :param instance: View Instance that sent the signal
-    :param reset_password_token: Token Model Object
-    :param args:
-    :param kwargs:
-    :return:
-    """
-    # send an e-mail to the user
+def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs): #SIGNAL
+    reset_password_link = f'http://127.0.0.1:3000/reset/{reset_password_token.key}'
+    print(reset_password_token.key)
     context = {
-        'current_user': reset_password_token.user,
-        'email': reset_password_token.user.email,
-        'reset_password_url': "{}?token={}".format(
-            instance.request.build_absolute_uri(reverse('password_reset:reset-password-confirm')),
-            reset_password_token.key)
+        'reset_password_link': reset_password_link,
     }
+    html_template = get_template('password_reset_email.html').render(context)
 
-    # render email text
-    email_html_message = render_to_string('user_reset_password.html', context)
-    email_plaintext_message = render_to_string('user_reset_password.txt', context)
+    subject = "Password Reset for WeCreate"
+    content = reset_password_link
+    from_email = 'wecreate.designs.srl@hotmail.com'
+    recipient_list = [reset_password_token.user.email]
 
-    msg = EmailMultiAlternatives(
-        "Password Reset for {title}".format(title="WeCreate"),
-        email_plaintext_message,
-        "noreply@somehost.local",
-        [reset_password_token.user.email]
-    )
-    msg.attach_alternative(email_html_message, "text/html")
-    msg.send()
+    send_mail(subject, content, from_email, recipient_list, html_message=html_template, fail_silently=False)
+    print("mail sent")
+
+
+def get_csrf_token(request):
+    csrf_token = get_token(request)
+    response = JsonResponse({'csrfToken': csrf_token})
+    print("get_csrf_token RESPONSE: ", response)
+    print(csrf_token)
+
+    return response
 
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ClientDetailView(APIView):
-    print('Client Detail')
     serializer_class = ProjectSerializer
     permission_classes = [AllowAny]
-    print('Client Detail - after Permissions')
 
     def get(self, request, id):
         client = MyUser.objects.filter(pk=id)
