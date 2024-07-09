@@ -41,22 +41,18 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     @classmethod
     def get_token(cls, user):
-        print('get')
         token = super().get_token(user)
         token['email'] = user.email
         return token
 
     def validate(self, attrs):
-        print('validate')
 
         credentials = {
             'email': attrs.get('email'),
             'password': attrs.get('password')
         }
         user = get_user_model().objects.filter(email=credentials['email']).first()
-        print(user)
         if user and user.check_password(credentials['password']):
-            print('pw checked')
             return super().validate(attrs)
         else:
             raise serializers.ValidationError('Invalid credentials')

@@ -36,9 +36,8 @@ from django.dispatch import receiver
 
 
 @receiver(reset_password_token_created)
-def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs): #SIGNAL
+def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):  # SIGNAL
     reset_password_link = f'http://127.0.0.1:3000/reset/{reset_password_token.key}'
-    print(reset_password_token.key)
     context = {
         'reset_password_link': reset_password_link,
     }
@@ -50,14 +49,11 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
     recipient_list = [reset_password_token.user.email]
 
     send_mail(subject, content, from_email, recipient_list, html_message=html_template, fail_silently=False)
-    print("mail sent")
 
 
 def get_csrf_token(request):
     csrf_token = get_token(request)
     response = JsonResponse({'csrfToken': csrf_token})
-    print("get_csrf_token RESPONSE: ", response)
-    print(csrf_token)
 
     return response
 
