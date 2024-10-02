@@ -38,15 +38,12 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
         token['email'] = user.email
         return token
-
     def validate(self, attrs):
-
         credentials = {
             'email': attrs.get('email'),
             'password': attrs.get('password')

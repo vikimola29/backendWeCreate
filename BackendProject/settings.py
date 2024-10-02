@@ -26,17 +26,13 @@ SECRET_KEY = 'django-insecure-lmam^a^+jwicw%gbe_i3rl^4bek0kf09lqe-yn82bjp8!h1+dr
 
 DEBUG = True
 
-# SMTP Configuration
 EMAIL_HOST = 'smtp.office365.com'
-# EMAIL_HOST = 'smtp-mail.outlook.com'
 EMAIL_HOST_USER = 'wecreate.designs.srl@hotmail.com'
 EMAIL_HOST_PASSWORD = 'Lucykutya2'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-
 DEFAULT_FROM_EMAIL = 'wecreate.designs.srl@hotmail.com'
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 ALLOWED_HOSTS = ['*']
 
@@ -62,11 +58,9 @@ AUTH_USER_MODEL = 'BackendApp.MyUser'
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
-        # 'rest_framework.permissions.IsAdminUser',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        # 'rest_framework.authentication.TokenAuthentication',
     ),
 
 }
@@ -96,7 +90,6 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": False,
-
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": "",
@@ -105,19 +98,15 @@ SIMPLE_JWT = {
     "JSON_ENCODER": None,
     "JWK_URL": None,
     "LEEWAY": 0,
-
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
     "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
-
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
     "TOKEN_TYPE_CLAIM": "token_type",
     "TOKEN_USER_CLASS": "rest_framework_simplejwt.models.TokenUser",
-
     "JTI_CLAIM": "jti",
-
     "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
     "SLIDING_TOKEN_LIFETIME": datetime.timedelta(minutes=5),
     "SLIDING_TOKEN_REFRESH_LIFETIME": datetime.timedelta(days=1),

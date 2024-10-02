@@ -1,23 +1,19 @@
 import logging
 
-from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.views import PasswordContextMixin
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives
+from django.core.mail import send_mail
+from django.dispatch import receiver
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
 from django.template import TemplateDoesNotExist
 from django.template.loader import get_template
-from django.urls import reverse_lazy, reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext_lazy as _
-from django.views.decorators.csrf import csrf_exempt, csrf_protect
-from django.views.generic import FormView
+from django.views.decorators.csrf import csrf_exempt
+from django_rest_passwordreset.signals import reset_password_token_created
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -28,26 +24,17 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import NewsletterUser, MyUser, Project
 from .serializers import MessageSerializer, NewsletterUserSignUpSerializer, MyTokenObtainPairSerializer, \
     MyUserSerializer, ProjectSerializer
-from django.contrib.auth.models import User
-from django.core.mail import send_mail
-from django.http import JsonResponse
-from django_rest_passwordreset.signals import reset_password_token_created
-from django.dispatch import receiver
 
 
 @receiver(reset_password_token_created)
-def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):  # SIGNAL
+def password_reset_token_created(sender, instance, reset_password_token, *args, **kwargs):
     reset_password_link = f'http://127.0.0.1:3000/reset/{reset_password_token.key}'
-    context = {
-        'reset_password_link': reset_password_link,
-    }
+    context = {'reset_password_link': reset_password_link,}
     html_template = get_template('password_reset_email.html').render(context)
-
     subject = "Password Reset for WeCreate"
     content = reset_password_link
     from_email = 'wecreate.designs.srl@hotmail.com'
     recipient_list = [reset_password_token.user.email]
-
     send_mail(subject, content, from_email, recipient_list, html_message=html_template, fail_silently=False)
 
 
@@ -60,14 +47,12 @@ def get_csrf_token(request):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ClientDetailView(APIView):
-    serializer_class = ProjectSerializer
+    serializer_class = MyUserSerializer
     permission_classes = [AllowAny]
-
     def get(self, request, id):
         client = MyUser.objects.filter(pk=id)
         serializer = MyUserSerializer(client, many=True)
         return Response(serializer.data)
-
     def put(self, request, id):
         client = get_object_or_404(MyUser, pk=id)
         client_data = {
@@ -108,19 +93,13 @@ class ClientView(APIView):
             'email': request.data.get('email'),
             'company_name': request.data.get('company_name'),
             'password': request.data.get('password'),
-            'password2': request.data.get('password2')
-        }
-
+            'password2': request.data.get('password2')}
         if MyUser.objects.filter(email=client_data['email']).exists():
             return JsonResponse({'success': False, 'message': 'Email already taken'})
-
         if client_data['password'] != client_data['password2']:
             return JsonResponse({'success': False, 'message': 'Passwords do not match'})
-
         client_data['password'] = make_password(client_data['password'])
-
         serializer = MyUserSerializer(data=client_data)
-
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -141,7 +120,7 @@ class AllClientsView(APIView):
 @method_decorator(csrf_exempt, name='dispatch')
 class ProjectDetailView(APIView):
     serializer_class = ProjectSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Project.objects.filter(client=self.request.user)
@@ -198,18 +177,14 @@ class AllProjectsView(APIView):
 @method_decorator(csrf_exempt, name='dispatch')
 class ProjectView(APIView):
     serializer_class = ProjectSerializer
-    permission_classes = [IsAuthenticated]
-
+    permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):
         projects = Project.objects.filter(client=request.user)
         serializer = ProjectSerializer(projects, many=True)
         return Response(serializer.data)
-
     def post(self, request, *args, **kwargs):
         client_email = request.data.get('client')
-
         client = get_object_or_404(MyUser, email=client_email)
-
         project_data = {
             'name': request.data.get('name'),
             'link': request.data.get('link'),
@@ -224,9 +199,7 @@ class ProjectView(APIView):
             'monthly_payment_status': request.data.get('monthly_payment_status'),
             'registered_date': request.data.get('registered_date')
         }
-
         serializer = ProjectSerializer(data=project_data)
-
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -256,12 +229,6 @@ class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
 
-def user_recover(request):
-    return None
-
-
-def user_recover_password(request):
-    return None
 
 
 @csrf_exempt
@@ -270,26 +237,21 @@ def user_recover_password(request):
 def create_message(request):
     if request.method == 'POST':
         serializer = MessageSerializer(data=request.data)
-
         if serializer.is_valid():
             serializer.save()
-
             name = request.data.get('name')
             phone = request.data.get('phone')
             email = request.data.get('email')
             message = request.data.get('message')
-
             subject = "WeCreate - Contact Form"
             content = f"Name: {name} \n" \
                       f"Phone: {phone}\n" \
                       f"Email: {email}\n" \
                       f"Message: {message}"
-
-            # from_mail = settings.EMAIL_HOST_USER
             from_email = 'wecreate.designs.srl@hotmail.com'
             recipient_list = ['wecreate.designs.srl@gmail.com']
 
-            # send_mail(subject, content, from_email, recipient_list, fail_silently=False)
+            send_mail(subject, content, from_email, recipient_list, fail_silently=False)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -324,7 +286,7 @@ def newsletter_subscribe(request):
                         to=recipient_list
                     )
                     message.attach_alternative(html_template, "text/html")
-                    # message.send()
+                    message.send()
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
                 else:
                     return Response({"error": "Email already exists"}, status=status.HTTP_400_BAD_REQUEST)
@@ -353,7 +315,6 @@ def newsletter_unsubscribe(request):
                 serializer.save()
                 NewsletterUser.objects.filter(email=email).delete()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
-
             else:
                 print('Email NOT exists')
                 messages.warning(request, "Email not in database.", extra_tags='warning')

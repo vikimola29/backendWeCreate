@@ -12,6 +12,7 @@ urlpatterns = [
     re_path(r'^get-csrf-token/$', get_csrf_token),
 
     re_path(r'^create_message/$', views.create_message, name='create_message'),
+
     re_path(r'^newsletter/subscribe/$', views.newsletter_subscribe, name='newsletter_subscribe'),
     re_path(r'^newsletter/unsubscribe/$', views.newsletter_unsubscribe, name='newsletter_unsubscribe'),
 
@@ -19,7 +20,9 @@ urlpatterns = [
 
     re_path(r'^token/$', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     re_path(r'^token/refresh/$', TokenRefreshView.as_view(), name='token_refresh'),
+
     re_path('^profile/$', ProfileView.as_view(), name='profile'),
+
     re_path('^projects/$', ProjectView.as_view(), name='projects'),
     path('project/<int:id>/', ProjectDetailView.as_view(), name='project-detail'),
     re_path('^all-projects/$', AllProjectsView.as_view(), name='all-projects'),
